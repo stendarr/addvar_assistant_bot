@@ -6,9 +6,8 @@ import logging
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 lines = [line.rstrip('\n') for line in open('settings')]
-my_chat_id = lines[0]
+my_chat_id = int(lines[0])
 my_token = lines[1]
-
 quotes = ["I've got some salmon to sell.",
           "The finest fish, here! Caught daily!",
           "You shouldn't leave Solitude without trying our fish. Best in Skyrim.",
@@ -19,20 +18,13 @@ quotes = ["I've got some salmon to sell.",
           "May the gods speed your journeys... and steady your sword arm."]
 hellos = ["Hey", "Howdy", "Hello", "Salve", "Greetings", "Hi"]
 
+# ------------------------------------------------------------------------------
 
-def xkcd(a,b):
-    this_chat_id = b.message.chat_id
-    b.message.reply_text('{}'.format(b.message.from_user.first_name)+' is not in the sudoers file. This incident will be reported.')
-    time.sleep(0.5)
-    a.send_photo(chat_id=this_chat_id, photo=open('xkcd.jpg', 'rb'))
-
-def hello(bot, update):
-    update.message.reply_text(random.choice(hellos)+' {}! '.format(update.message.from_user.first_name)+random.choice(quotes))
-
+# Starting
 def start(bot, update):
     this_chat_id = update.message.chat_id
     if this_chat_id == my_chat_id:
-        custom_keyboard = [['/elisif', '/java_status', '/processes'],['/minecraft', '/meinkraft'], ['/killall_java']]
+        custom_keyboard = [['/general'],['/webserver'],['/minecraft']]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
         bot.send_message(this_chat_id, text=random.choice(quotes), reply_markup=reply_markup)
     else:
@@ -40,77 +32,159 @@ def start(bot, update):
         custom_keyboard = [['/start', '/hello', '/xkcd']]
         reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
         bot.send_message(this_chat_id, text=random.choice(quotes), reply_markup=reply_markup)
-
-def elisif(bot,update):
-    this_chat_id = update.message.chat_id
-    if this_chat_id == my_chat_id:
-        try:
-            update.message.reply_text(str(requests.get('https://odrljin.xyz', headers={'User-Agent':'Addvar'}).status_code))
-        except Exception as e:
-            update.message.reply_text("An error occured" + str(e))
-        #ps_return_text = str(subprocess.check_output(['ps','aux']))
-        #update.message.reply_text(ps_return_text[:256])
-    else:
-        xkcd(bot,update)
-
-def meinkraft(bot, update):
-    this_chat_id = update.message.chat_id
-    if this_chat_id == my_chat_id:
-        ps_return_text = str(subprocess.Popen(['./meinkraft.sh']))
-        update.message.reply_text(ps_return_text)
-    else: xkcd(bot, update)
-
+def xkcd(a,b):
+    b.message.reply_text('{}'.format(b.message.from_user.first_name)+' is not in the sudoers file. This incident will be reported.')
+    time.sleep(0.5)
+    a.send_photo(chat_id=this_chat_id, photo=open('xkcd.jpg', 'rb'))
+def hello(bot, update):
+    update.message.reply_text(random.choice(hellos)+' {}! '.format(update.message.from_user.first_name)+random.choice(quotes))
+def general(bot, update):
+    custom_keyboard = [['/start'],['/shutdown_server', '/restart_server', '/list_processes']]
+    reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
+    bot.send_message(this_chat_id, text="Welcome to general", reply_markup=reply_markup)
+def webserver(bot, update):
+    custom_keyboard = [['/a_stop','/a_restart','/a_status'],['/g_stop','/g_start','/g_single'],['/elisif']]
+    reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
+    bot.send_message(this_chat_id, text="Welcome to Webserver", reply_markup=reply_markup)
 def minecraft(bot, update):
-    this_chat_id = update.message.chat_id
-    if this_chat_id == my_chat_id:
-        ps_return_text = str(subprocess.Popen(['./minecraft.sh']))
-        update.message.reply_text(ps_return_text)
-    else: xkcd(bot, update)
+    custom_keyboard = [['/ftb_start', '/vanilla_start'], ['/java_status', '/list_joined_history', '/list_online']]
+    reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
+    bot.send_message(this_chat_id, text="Welcome to Minecraft", reply_markup=reply_markup)
 
+# General
+def list_processes(bot, update):
+    try:
+        ps_return_text = str(subprocess.check_output(['./scripts/list_processes.sh'])).replace('\\n','\n\n')[2:]
+        ps_return_list = ps_return_text.split('\n\n')[:7]
+        ps_return_text = '\n\n'.join(ps_return_list)
+        update.message.reply_text(ps_return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def restart_server(bot, update):
+    try:
+        return_text = str(subprocess.Popen(['./scripts/restart_server.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def shutdown_server(bot, update):
+    try:
+        return_text = str(subprocess.Popen(['./scripts/shutdown_server.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+
+# Webserver
+def a_status(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/a_status.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def a_restart(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/a_restart.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def a_stop(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/a_stop.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def g_start(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/g_start.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def g_stop(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/g_stop.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def g_single(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/g_single.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def elisif(bot,update):
+    try:
+        update.message.reply_text(str(requests.get('https://odrljin.xyz', headers={'User-Agent':'Addvar'}).status_code))
+    except Exception as e:
+        update.message.reply_text("An error occured" + str(e))
+
+# Minecraft
+def ftb_start(bot, update):
+    try:
+        return_text = str(subprocess.Popen(['./scripts/ftb_start.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def vanilla_start(bot, update):
+    try:
+        return_text = str(subprocess.Popen(['./scripts/vanilla_start.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
 def java_status(bot, update):
-    this_chat_id = update.message.chat_id
-    if this_chat_id == my_chat_id:
-        ps_return_text = str(subprocess.check_output(['./java_status.sh']))[2:][:-1].replace('\\n','\n\n')
-        update.message.reply_text(ps_return_text)
-    else: xkcd(bot, update)
+    try:
+        return_text = str(subprocess.check_output(['./scripts/java_status.sh']))[2:][:-1].replace('\\n','\n\n')
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def list_joined_history(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/list_joined_history.sh']))[2:][:-1].replace('\\n','\n\n')
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+def list_online(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/list_online.sh']))[2:][:-1].replace('\\n','\n\n')
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
 
-def killall_java(bot, update):
-    this_chat_id = update.message.chat_id
-    if this_chat_id == my_chat_id:
-        try:
-            killall_return_text = str(subprocess.check_output(['./killall_java.sh'])).replace('\\n','\n\n')
-            update.message.reply_text(killall_return_text+"\n\nDone")
-        except Exception as e:
-            update.message.reply_text(str(e)+'\n\nReturned Error. No java running?')
-    else: xkcd(bot, update)
-
-def processes(bot, update):
-    this_chat_id = update.message.chat_id
-    if this_chat_id == my_chat_id:
-        try:
-            ps_return_text = str(subprocess.check_output(['./processes.sh'])).replace('\\n','\n\n')[2:]
-            ps_return_list = ps_return_text.split('\n\n')[:11]
-            ps_return_text = '\n\n'.join(ps_return_list)
-            update.message.reply_text(ps_return_text+"\n\n")
-        except Exception as e:
-            update.message.reply_text('Returned Error:\n\n'+str(e))
-    else: xkcd(bot, update)
-
+# ------------------------------------------------------------------------------
 
 updater = Updater(my_token)
 
-def coli(a,b):
-    updater.dispatcher.add_handler(CommandHandler(a, b))
+def auth_command(a,b):
+    updater.dispatcher.add_handler(CommandHandler(a, b, filters=Filters.user(username='@professionalgopnik'))
 
-coli('hello', hello)
-coli('start', start)
-coli('elisif', elisif)
-coli('xkcd', xkcd)
-coli('java_status', java_status)
-coli('killall_java', killall_java)
-coli('minecraft', minecraft)
-coli('meinkraft', meinkraft)
-coli('processes', processes)
+# Start
+# public
+updater.dispatcher.add_handler(CommandHandler('start', start)
+updater.dispatcher.add_handler(CommandHandler('hello', hello)
+updater.dispatcher.add_handler(CommandHandler('xkcd', xkcd)
+# private
+auth_command('general', general)
+auth_command('webserver', webserver)
+auth_command('minecraft', minecraft)
+
+# General
+auth_command('list_processes', list_processes)
+auth_command('shutdown_server', shutdown_server)
+auth_command('restart_server', restart_server)
+
+# Webserver
+auth_command('elisif', elisif)
+auth_command('a_status', a_status)
+auth_command('a_restart', a_restart)
+auth_command('a_stop', a_stop)
+auth_command('g_single', g_single)
+auth_command('g_start', g_start)
+auth_command('a_stop', g_stop)
+
+# Minecraft
+auth_command('ftb_start', ftb_start)
+auth_command('vanilla_start', vanilla_start)
+auth_command('java_status', java_status)
+auth_command('list_joined_history', list_joined_history)
+auth_command('list_online', list_online)
 
 updater.start_polling()
 updater.idle()
