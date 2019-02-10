@@ -1,5 +1,5 @@
 import requests, random, subprocess, time
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, Filters
 import telegram
 
 import logging
@@ -35,21 +35,21 @@ def start(bot, update):
 def xkcd(a,b):
     b.message.reply_text('{}'.format(b.message.from_user.first_name)+' is not in the sudoers file. This incident will be reported.')
     time.sleep(0.5)
-    a.send_photo(chat_id=this_chat_id, photo=open('xkcd.jpg', 'rb'))
+    a.send_photo(chat_id=b.message.chat_id, photo=open('xkcd.jpg', 'rb'))
 def hello(bot, update):
     update.message.reply_text(random.choice(hellos)+' {}! '.format(update.message.from_user.first_name)+random.choice(quotes))
 def general(bot, update):
     custom_keyboard = [['/start'],['/shutdown_server', '/restart_server', '/list_processes']]
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-    bot.send_message(this_chat_id, text="Welcome to general", reply_markup=reply_markup)
+    bot.send_message(update.message.chat_id, text="Welcome to general", reply_markup=reply_markup)
 def webserver(bot, update):
-    custom_keyboard = [['/a_stop','/a_restart','/a_status'],['/g_stop','/g_start','/g_single'],['/elisif']]
+    custom_keyboard = [['/start', '/elisif'],['/a_stop','/a_restart','/a_status'],['/g_stop','/g_start','/g_single']]
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-    bot.send_message(this_chat_id, text="Welcome to Webserver", reply_markup=reply_markup)
+    bot.send_message(update.message.chat_id, text="Welcome to Webserver", reply_markup=reply_markup)
 def minecraft(bot, update):
-    custom_keyboard = [['/ftb_start', '/vanilla_start'], ['/java_status', '/list_joined_history', '/list_online']]
+    custom_keyboard = [['/start'],['/ftb_start', '/vanilla_start'], ['/java_status', '/list_joined_history', '/list_online']]
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-    bot.send_message(this_chat_id, text="Welcome to Minecraft", reply_markup=reply_markup)
+    bot.send_message(update.message.chat_id, text="Welcome to Minecraft", reply_markup=reply_markup)
 
 # General
 def list_processes(bot, update):
@@ -94,7 +94,7 @@ def a_stop(bot, update):
         update.message.reply_text('Returned Error:\n\n'+str(e))
 def g_start(bot, update):
     try:
-        return_text = str(subprocess.check_output(['./scripts/g_start.sh']))
+        return_text = str(subprocess.Popen(['./scripts/g_start.sh']))
         update.message.reply_text(return_text)
     except Exception as e:
         update.message.reply_text('Returned Error:\n\n'+str(e))
@@ -103,7 +103,7 @@ def g_stop(bot, update):
         return_text = str(subprocess.check_output(['./scripts/g_stop.sh']))
         update.message.reply_text(return_text)
     except Exception as e:
-        update.message.reply_text('Returned Error:\n\n'+str(e))
+        update.message.reply_text('Returned Error (goaccess not running?):\n\n'+str(e))
 def g_single(bot, update):
     try:
         return_text = str(subprocess.check_output(['./scripts/g_single.sh']))
@@ -137,13 +137,15 @@ def java_status(bot, update):
         update.message.reply_text('Returned Error:\n\n'+str(e))
 def list_joined_history(bot, update):
     try:
-        return_text = str(subprocess.check_output(['./scripts/list_joined_history.sh']))[2:][:-1].replace('\\n','\n\n')
+        return_text = str(subprocess.check_output(['./scripts/list_joined_history.sh'])).replace('\\n','\n\n')[2:]
+        return_list = return_text.split('\n\n')[-16:]
+        return_text = '\n\n'.join(return_list)[:-1]
         update.message.reply_text(return_text)
     except Exception as e:
         update.message.reply_text('Returned Error:\n\n'+str(e))
 def list_online(bot, update):
     try:
-        return_text = str(subprocess.check_output(['./scripts/list_online.sh']))[2:][:-1].replace('\\n','\n\n')
+        return_text = str(subprocess.check_output(['./scripts/list_online.sh']))
         update.message.reply_text(return_text)
     except Exception as e:
         update.message.reply_text('Returned Error:\n\n'+str(e))
@@ -153,13 +155,13 @@ def list_online(bot, update):
 updater = Updater(my_token)
 
 def auth_command(a,b):
-    updater.dispatcher.add_handler(CommandHandler(a, b, filters=Filters.user(username='@professionalgopnik'))
+    updater.dispatcher.add_handler(CommandHandler(a, b, filters=Filters.user(username='@professionalgopnik')))
 
 # Start
 # public
-updater.dispatcher.add_handler(CommandHandler('start', start)
-updater.dispatcher.add_handler(CommandHandler('hello', hello)
-updater.dispatcher.add_handler(CommandHandler('xkcd', xkcd)
+updater.dispatcher.add_handler(CommandHandler('start', start))
+updater.dispatcher.add_handler(CommandHandler('hello', hello))
+updater.dispatcher.add_handler(CommandHandler('xkcd', xkcd))
 # private
 auth_command('general', general)
 auth_command('webserver', webserver)
@@ -177,7 +179,7 @@ auth_command('a_restart', a_restart)
 auth_command('a_stop', a_stop)
 auth_command('g_single', g_single)
 auth_command('g_start', g_start)
-auth_command('a_stop', g_stop)
+auth_command('g_stop', g_stop)
 
 # Minecraft
 auth_command('ftb_start', ftb_start)
