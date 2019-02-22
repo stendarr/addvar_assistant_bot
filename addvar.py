@@ -117,7 +117,7 @@ def elisif(bot,update):
         update.message.reply_text("An error occured" + str(e))
 def ls_contact(bot, update):
     try:
-        return_text = str(subprocess.check_output(['./scripts/ls_contact.sh']))
+        return_text = str(subprocess.check_output(['./scripts/ls_contact.sh'])).replace('\\n','\n\n')[2:]
         update.message.reply_text(return_text)
     except Exception as e:
         update.message.reply_text('Returned Error:\n\n'+str(e))
