@@ -43,7 +43,7 @@ def general(bot, update):
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
     bot.send_message(update.message.chat_id, text="Welcome to general", reply_markup=reply_markup)
 def webserver(bot, update):
-    custom_keyboard = [['/start', '/elisif'],['/a_stop','/a_restart','/a_status'],['/g_stop','/g_start','/g_single']]
+    custom_keyboard = [['/start', '/elisif', '/ls_contact'],['/a_stop','/a_restart','/a_status'],['/g_stop','/g_start','/g_single']]
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
     bot.send_message(update.message.chat_id, text="Welcome to Webserver", reply_markup=reply_markup)
 def minecraft(bot, update):
@@ -115,6 +115,13 @@ def elisif(bot,update):
         update.message.reply_text(str(requests.get('https://odrljin.xyz', headers={'User-Agent':'Addvar'}).status_code))
     except Exception as e:
         update.message.reply_text("An error occured" + str(e))
+def ls_contact(bot, update):
+    try:
+        return_text = str(subprocess.check_output(['./scripts/ls_contact.sh']))
+        update.message.reply_text(return_text)
+    except Exception as e:
+        update.message.reply_text('Returned Error:\n\n'+str(e))
+
 
 # Minecraft
 def ftb_start(bot, update):
@@ -180,6 +187,7 @@ auth_command('a_stop', a_stop)
 auth_command('g_single', g_single)
 auth_command('g_start', g_start)
 auth_command('g_stop', g_stop)
+auth_command('ls_contact', ls_contact)
 
 # Minecraft
 auth_command('ftb_start', ftb_start)
